@@ -9,6 +9,7 @@ import com.google.auth.oauth2.GoogleCredentials;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.GeneralSecurityException;
@@ -21,13 +22,7 @@ public class GoogleSheetsConfig {
 
     @Bean
     public Sheets sheetsService() throws IOException, GeneralSecurityException {
-        InputStream credentialsStream = getClass()
-                .getClassLoader()
-                .getResourceAsStream("google-credentials.json");
-
-        if (credentialsStream == null) {
-            throw new IOException("Файл google-credentials.json не знайдено в resources!");
-        }
+        InputStream credentialsStream = getCredentialsStream();
 
         GoogleCredentials credentials = GoogleCredentials
                 .fromStream(credentialsStream)
@@ -39,5 +34,27 @@ public class GoogleSheetsConfig {
                 new HttpCredentialsAdapter(credentials))
                 .setApplicationName(APPLICATION_NAME)
                 .build();
+    }
+
+    private InputStream getCredentialsStream() throws IOException {
+        // Продакшн (Railway) — читаємо з змінної середовища
+        String credentialsJson = System.getenv("GOOGLE_CREDENTIALS_JSON");
+        if (credentialsJson != null && !credentialsJson.isBlank()) {
+            return new ByteArrayInputStream(credentialsJson.getBytes());
+        }
+
+        // Локально — читаємо з файлу в resources
+        InputStream stream = getClass().getClassLoader()
+                .getResourceAsStream("google-credentials.json");
+
+        if (stream == null) {
+            throw new IOException(
+                    "Не знайдено google-credentials.json. " +
+                            "Локально: поклади файл у src/main/resources/. " +
+                            "Продакшн: додай змінну GOOGLE_CREDENTIALS_JSON."
+            );
+        }
+
+        return stream;
     }
 }
