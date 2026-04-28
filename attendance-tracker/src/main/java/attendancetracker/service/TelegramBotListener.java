@@ -32,7 +32,6 @@ public class TelegramBotListener {
     private final HttpClient httpClient = HttpClient.newHttpClient();
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    // Зберігаємо offset щоб не обробляти одне повідомлення двічі
     private long lastUpdateId = 0;
 
     /**
@@ -99,7 +98,7 @@ public class TelegramBotListener {
             AttendanceReport report = googleSheetsService.getAttendanceForToday();
 
             if (report == null) {
-                telegramService.sendText("❌ Дані за сьогодні не знайдено.\nПеревір що вкладка називається правильно і колонка з датою існує.");
+                telegramService.sendText("Дані за сьогодні не знайдено.\nПеревір що вкладка називається правильно і колонка з датою існує.");
                 return;
             }
 
@@ -108,26 +107,22 @@ public class TelegramBotListener {
 
         } catch (Exception e) {
             log.error("Помилка при формуванні звіту за запитом: {}", e.getMessage(), e);
-            telegramService.sendText("❌ Помилка при читанні таблиці: " + e.getMessage());
+            telegramService.sendText("Помилка при читанні таблиці: " + e.getMessage());
         }
     }
 
     private void handleHelpCommand() {
         String helpText = """
-                👋 Привіт! Доступні команди:
+                Доступні команди:
                 
                 /звіт — отримати звіт відвідуваності за сьогодні
                 /report — те саме (англійська)
                 /z — скорочена команда
-                
-                Автоматичний звіт надходить щодня о 18:00 (Пн-Пт)
                 """;
         telegramService.sendText(helpText);
     }
 
     private String getBotUsername() {
-        // Повертає порожній рядок якщо не вдалось отримати username
-        // Це потрібно для обробки команд вигляду /звіт@bot_username
         return "";
     }
 }

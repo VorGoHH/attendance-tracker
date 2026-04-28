@@ -18,11 +18,8 @@ public class AttendanceJob {
     private final EmailService emailService;
     private final TelegramService telegramService;
 
-    // Продакшн: щодня о 18:00 пн-пт
     @Scheduled(cron = "0 0 18 * * MON-FRI")
 
-    // Тестування: кожні 30 секунд
-    //@Scheduled(cron = "*/30 * * * * *")
     public void generateAndSendAttendanceReport() {
         log.info("===== Запуск задачі відвідуваності =====");
         try {

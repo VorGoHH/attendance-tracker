@@ -37,13 +37,11 @@ public class GoogleSheetsConfig {
     }
 
     private InputStream getCredentialsStream() throws IOException {
-        // Продакшн (Railway) — читаємо з змінної середовища
         String credentialsJson = System.getenv("GOOGLE_CREDENTIALS_JSON");
         if (credentialsJson != null && !credentialsJson.isBlank()) {
             return new ByteArrayInputStream(credentialsJson.getBytes());
         }
 
-        // Локально — читаємо з файлу в resources
         InputStream stream = getClass().getClassLoader()
                 .getResourceAsStream("google-credentials.json");
 
