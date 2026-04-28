@@ -15,10 +15,10 @@ import java.util.List;
 @Service
 public class TelegramService {
 
-    @Value("${telegram.bot.token}")
+    @Value("${TELEGRAM_BOT_TOKEN:${telegram.bot.token:}}")
     private String botToken;
 
-    @Value("${telegram.bot.chat-id}")
+    @Value("${TELEGRAM_CHAT_ID:${telegram.bot.chat-id:}}")
     private String chatId;
 
     private final HttpClient httpClient = HttpClient.newHttpClient();

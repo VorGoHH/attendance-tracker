@@ -23,10 +23,10 @@ public class TelegramBotListener {
     private final GoogleSheetsService googleSheetsService;
     private final TelegramService telegramService;
 
-    @Value("${telegram.bot.token}")
+    @Value("${TELEGRAM_BOT_TOKEN:${telegram.bot.token:}}")
     private String botToken;
 
-    @Value("${telegram.bot.chat-id}")
+    @Value("${TELEGRAM_CHAT_ID:${telegram.bot.chat-id:}}")
     private String allowedChatId;
 
     private final HttpClient httpClient = HttpClient.newHttpClient();
