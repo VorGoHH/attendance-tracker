@@ -30,7 +30,7 @@ public enum AttendanceStatus {
         return switch (trimmed) {
             case "Наряд" -> ON_DUTY;
             case "Хворий" -> SICK;
-            case "Звільення" -> EXCUSED;
+            case "Звільнення" -> EXCUSED;
             case "Відсутній" -> ABSENT;
             case "Незаконно відсутній" -> ILLEGALLYABSENT;
             case "Відрядження" -> BUSINESS_TRIP;

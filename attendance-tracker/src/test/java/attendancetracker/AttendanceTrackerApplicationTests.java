@@ -1,4 +1,4 @@
-package attendance_tracker;
+package attendancetracker;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
