@@ -39,11 +39,9 @@ public class TelegramService {
                 - report.getIllegallyAbsent()
                 - report.getBusinessTrip();
 
-
         sb.append(report.getGroupName()).append(" ").append(report.getReportDate()).append("\n");
         sb.append("З/с - ").append(report.getTotalStudents()).append("\n");
         sb.append("В/н - ").append(totalPresent).append("\n");
-
 
         appendLine(sb, "Зв", report.getExcused(), report.getExcusedList());
         appendLine(sb, "Відр", report.getBusinessTrip(), report.getBusinessTripList());
@@ -54,7 +52,6 @@ public class TelegramService {
 
         return sb.toString().trim();
     }
-
 
     private void appendLine(StringBuilder sb, String label, int count, List<String> names) {
         if (count > 0) {
@@ -85,6 +82,35 @@ public class TelegramService {
 
         } catch (Exception e) {
             log.error("Помилка відправки Telegram повідомлення: {}", e.getMessage(), e);
+        }
+    }
+
+    public void sendMenu() {
+        try {
+            String url = String.format("https://api.telegram.org/bot%s/sendMessage", botToken);
+
+            String text = "Привіт! Оберіть, який звіт вам потрібен, за допомогою кнопок нижче:";
+
+            String keyboardJson = "{\"keyboard\":[[{\"text\":\"📊 Звіт за сьогодні\"}],[{\"text\":\"📅 Звіт за іншу дату\"}]],\"resize_keyboard\":true}";
+
+            String body = "chat_id=" + encode(chatId) + "&text=" + encode(text) + "&reply_markup=" + encode(keyboardJson);
+
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(url))
+                    .header("Content-Type", "application/x-www-form-urlencoded")
+                    .POST(HttpRequest.BodyPublishers.ofString(body, StandardCharsets.UTF_8))
+                    .build();
+
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+
+            if (response.statusCode() == 200) {
+                log.info("Меню з кнопками успішно відправлено");
+            } else {
+                log.error("Помилка відправки меню: {} {}", response.statusCode(), response.body());
+            }
+
+        } catch (Exception e) {
+            log.error("Помилка відправки меню: {}", e.getMessage(), e);
         }
     }
 

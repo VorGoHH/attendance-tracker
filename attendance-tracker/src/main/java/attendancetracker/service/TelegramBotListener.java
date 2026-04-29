@@ -76,9 +76,20 @@ public class TelegramBotListener {
                 String textLower = text.toLowerCase();
 
                 if (textLower.equals("/start") || textLower.equals("/help")) {
+                    telegramService.sendMenu();
                     handleHelpCommand();
+                } else if (text.equals("📊 Звіт за сьогодні")) {
+                    handleReportCommand("");
+                } else if (text.equals("📅 Звіт за іншу дату")) {
+                    telegramService.sendText("Будь ласка, надішліть дату у форматі дд.мм або дд.мм.рррр (наприклад: 27.04)");
                 } else if (textLower.startsWith("/звіт") || textLower.startsWith("/report") || textLower.startsWith("/z")) {
                     handleReportCommand(text);
+                } else {
+
+                    LocalDate parsedDate = parseDate(text);
+                    if (parsedDate != null && !text.isEmpty()) {
+                        handleReportCommand("/звіт " + text);
+                    }
                 }
             }
 
@@ -87,17 +98,15 @@ public class TelegramBotListener {
         }
     }
 
-
     private void handleReportCommand(String text) {
         LocalDate date = parseDate(text);
 
         if (date == null) {
             telegramService.sendText(
                     "Невірний формат дати.\n" +
-                            "Використовуй:\n" +
-                            "/звіт — за сьогодні\n" +
-                            "/звіт 27.04 — за конкретну дату\n" +
-                            "/звіт 27.04.2026 — за дату з роком"
+                            "Використовуй кнопки меню або введи дату у форматі:\n" +
+                            "27.04 — за конкретну дату\n" +
+                            "27.04.2026 — за дату з роком"
             );
             return;
         }
@@ -123,7 +132,6 @@ public class TelegramBotListener {
             telegramService.sendText("Помилка при читанні таблиці: " + e.getMessage());
         }
     }
-
 
     private LocalDate parseDate(String text) {
         String datePart = text.trim()
@@ -153,10 +161,8 @@ public class TelegramBotListener {
 
     private void handleHelpCommand() {
         String helpText =
-                "Доступні команди:\n\n" +
-                        "/звіт — звіт за сьогодні\n" +
-                        "/звіт 27.04 — звіт за конкретну дату\n" +
-                        "/звіт 27.04.2026 — звіт за дату з роком\n";
+                "Тепер ви можете використовувати кнопки меню внизу екрану!\n\n" +
+                        "Також я розумію прямі повідомлення з датою (наприклад, просто напишіть 27.04 або 27.04.2026).";
         telegramService.sendText(helpText);
     }
 }
