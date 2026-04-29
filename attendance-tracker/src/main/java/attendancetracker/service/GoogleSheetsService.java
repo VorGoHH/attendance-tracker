@@ -31,12 +31,11 @@ public class GoogleSheetsService {
     private static final DateTimeFormatter COLUMN_DATE_FORMAT = DateTimeFormatter.ofPattern("dd.MM");
     private static final DateTimeFormatter REPORT_DATE_FORMAT = DateTimeFormatter.ofPattern("dd.MM.yyyy");
 
-    public AttendanceReport getAttendanceForToday() throws IOException {
-        LocalDate today = LocalDate.now();
-        String sheetName = getSheetNameForMonth(today);
-        String todayColumn = today.format(COLUMN_DATE_FORMAT);
+    public AttendanceReport getAttendanceForDate(LocalDate date) throws IOException {
+        String sheetName = getSheetNameForMonth(date);
+        String dateColumn = date.format(COLUMN_DATE_FORMAT);
 
-        log.info("Читання даних з вкладки '{}', колонка дати '{}'", sheetName, todayColumn);
+        log.info("Читання даних з вкладки '{}', колонка дати '{}'", sheetName, dateColumn);
 
         String range = sheetName + "!A:Z";
         ValueRange response;
@@ -46,24 +45,22 @@ public class GoogleSheetsService {
                     .execute();
         } catch (Exception e) {
             log.error("Помилка при зчитуванні таблиці: {}", e.getMessage());
-            throw new IOException("Не вдалося зчитати дані з Google Sheets: " + e.getMessage(), e);
+            throw new IOException("Не вдалося зчитати дані: " + e.getMessage(), e);
         }
 
         List<List<Object>> rows = response.getValues();
-        if (rows == null || rows.isEmpty()) {
-            log.warn("Таблиця порожня або вкладка '{}' не знайдена", sheetName);
-            return null;
-        }
+        if (rows == null || rows.isEmpty()) return null;
 
         List<Object> headers = rows.get(0);
-        int dateColumnIndex = findColumnIndex(headers, todayColumn);
+        int dateColumnIndex = findColumnIndex(headers, dateColumn);
+        if (dateColumnIndex == -1) return null;
 
-        if (dateColumnIndex == -1) {
-            log.warn("Колонка для дати '{}' не знайдена у таблиці", todayColumn);
-            return null;
-        }
+        return buildReport(rows, dateColumnIndex, date);
+    }
 
-        return buildReport(rows, dateColumnIndex, today);
+
+    public AttendanceReport getAttendanceForToday() throws IOException {
+        return getAttendanceForDate(LocalDate.now());
     }
 
     private AttendanceReport buildReport(List<List<Object>> rows, int dateColIndex, LocalDate date) {
