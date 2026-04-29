@@ -20,12 +20,16 @@ public class TelegramService {
     private String botToken;
 
     @Value("${TELEGRAM_CHAT_ID:${telegram.bot.chat-id:}}")
-    private String chatId;
+    private String defaultChatId;
 
     private final HttpClient httpClient = HttpClient.newHttpClient();
 
     public void sendAttendanceReport(AttendanceReport report) {
-        sendText(buildMessage(report));
+        sendAttendanceReport(defaultChatId, report);
+    }
+
+    public void sendAttendanceReport(String targetChatId, AttendanceReport report) {
+        sendText(targetChatId, buildMessage(report));
     }
 
     private String buildMessage(AttendanceReport report) {
@@ -60,11 +64,10 @@ public class TelegramService {
         }
     }
 
-    public void sendText(String text) {
+    public void sendText(String targetChatId, String text) {
         try {
             String url = String.format("https://api.telegram.org/bot%s/sendMessage", botToken);
-
-            String body = "chat_id=" + encode(chatId) + "&text=" + encode(text);
+            String body = "chat_id=" + encode(targetChatId) + "&text=" + encode(text);
 
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(url))
@@ -74,26 +77,21 @@ public class TelegramService {
 
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 
-            if (response.statusCode() == 200) {
-                log.info("Telegram повідомлення успішно відправлено");
-            } else {
+            if (response.statusCode() != 200) {
                 log.error("Помилка відправки Telegram: {} {}", response.statusCode(), response.body());
             }
-
         } catch (Exception e) {
-            log.error("Помилка відправки Telegram повідомлення: {}", e.getMessage(), e);
+            log.error("Помилка відправки повідомлення: {}", e.getMessage());
         }
     }
 
-    public void sendMenu() {
+    public void sendMenu(String targetChatId) {
         try {
             String url = String.format("https://api.telegram.org/bot%s/sendMessage", botToken);
-
-            String text = "Привіт! Оберіть, який звіт вам потрібен, за допомогою кнопок нижче:";
-
+            String text = "Оберіть потрібний звіт:";
             String keyboardJson = "{\"keyboard\":[[{\"text\":\"📊 Звіт за сьогодні\"}],[{\"text\":\"📅 Звіт за іншу дату\"}]],\"resize_keyboard\":true}";
 
-            String body = "chat_id=" + encode(chatId) + "&text=" + encode(text) + "&reply_markup=" + encode(keyboardJson);
+            String body = "chat_id=" + encode(targetChatId) + "&text=" + encode(text) + "&reply_markup=" + encode(keyboardJson);
 
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(url))
@@ -101,16 +99,9 @@ public class TelegramService {
                     .POST(HttpRequest.BodyPublishers.ofString(body, StandardCharsets.UTF_8))
                     .build();
 
-            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-
-            if (response.statusCode() == 200) {
-                log.info("Меню з кнопками успішно відправлено");
-            } else {
-                log.error("Помилка відправки меню: {} {}", response.statusCode(), response.body());
-            }
-
+            httpClient.send(request, HttpResponse.BodyHandlers.ofString());
         } catch (Exception e) {
-            log.error("Помилка відправки меню: {}", e.getMessage(), e);
+            log.error("Помилка відправки меню: {}", e.getMessage());
         }
     }
 

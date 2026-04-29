@@ -29,9 +29,6 @@ public class TelegramBotListener {
     @Value("${TELEGRAM_BOT_TOKEN:${telegram.bot.token:}}")
     private String botToken;
 
-    @Value("${TELEGRAM_CHAT_ID:${telegram.bot.chat-id:}}")
-    private String allowedChatId;
-
     private final HttpClient httpClient = HttpClient.newHttpClient();
     private final ObjectMapper objectMapper = new ObjectMapper();
     private long lastUpdateId = 0;
@@ -44,12 +41,9 @@ public class TelegramBotListener {
                     botToken, lastUpdateId + 1
             );
 
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(url))
-                    .GET()
-                    .build();
-
+            HttpRequest request = HttpRequest.newBuilder().uri(URI.create(url)).GET().build();
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+
             if (response.statusCode() != 200) return;
 
             JsonNode root = objectMapper.readTree(response.body());
@@ -57,17 +51,12 @@ public class TelegramBotListener {
             if (results == null || !results.isArray()) return;
 
             for (JsonNode update : results) {
-                long updateId = update.get("update_id").asLong();
-                lastUpdateId = updateId;
+                lastUpdateId = update.get("update_id").asLong();
 
                 JsonNode message = update.get("message");
                 if (message == null) continue;
 
-                String chatId = message.get("chat").get("id").asText();
-                if (!chatId.equals(allowedChatId)) {
-                    log.warn("Повідомлення від невідомого chat_id: {}", chatId);
-                    continue;
-                }
+                String currentChatId = message.get("chat").get("id").asText();
 
                 JsonNode textNode = message.get("text");
                 if (textNode == null) continue;
@@ -76,60 +65,47 @@ public class TelegramBotListener {
                 String textLower = text.toLowerCase();
 
                 if (textLower.equals("/start") || textLower.equals("/help")) {
-                    telegramService.sendMenu();
-                    handleHelpCommand();
+                    telegramService.sendMenu(currentChatId);
+                    handleHelpCommand(currentChatId);
                 } else if (text.equals("📊 Звіт за сьогодні")) {
-                    handleReportCommand("");
+                    handleReportCommand("", currentChatId);
                 } else if (text.equals("📅 Звіт за іншу дату")) {
-                    telegramService.sendText("Будь ласка, надішліть дату у форматі дд.мм або дд.мм.рррр (наприклад: 27.04)");
+                    telegramService.sendText(currentChatId, "Надішліть дату у форматі дд.мм (наприклад: 27.04)");
                 } else if (textLower.startsWith("/звіт") || textLower.startsWith("/report") || textLower.startsWith("/z")) {
-                    handleReportCommand(text);
+                    handleReportCommand(text, currentChatId);
                 } else {
-
+                    // Обробка простої дати без команд
                     LocalDate parsedDate = parseDate(text);
                     if (parsedDate != null && !text.isEmpty()) {
-                        handleReportCommand("/звіт " + text);
+                        handleReportCommand("/звіт " + text, currentChatId);
                     }
                 }
             }
-
         } catch (Exception e) {
-            log.error("Помилка при отриманні оновлень Telegram: {}", e.getMessage());
+            log.error("Помилка оновлень Telegram: {}", e.getMessage());
         }
     }
 
-    private void handleReportCommand(String text) {
+    private void handleReportCommand(String text, String chatId) {
         LocalDate date = parseDate(text);
 
         if (date == null) {
-            telegramService.sendText(
-                    "Невірний формат дати.\n" +
-                            "Використовуй кнопки меню або введи дату у форматі:\n" +
-                            "27.04 — за конкретну дату\n" +
-                            "27.04.2026 — за дату з роком"
-            );
+            telegramService.sendText(chatId, "Невірний формат дати. Напишіть, наприклад, 27.04");
             return;
         }
-
-        log.info("Запит звіту за дату: {}", date);
 
         try {
             AttendanceReport report = googleSheetsService.getAttendanceForDate(date);
 
             if (report == null) {
-                telegramService.sendText(
-                        "Дані за " + date.format(DateTimeFormatter.ofPattern("dd.MM.yyyy")) +
-                                " не знайдено.\nПеревір що колонка з датою існує у таблиці."
-                );
+                telegramService.sendText(chatId, "Дані за " + date.format(DateTimeFormatter.ofPattern("dd.MM.yyyy")) + " не знайдено.");
                 return;
             }
 
-            telegramService.sendAttendanceReport(report);
-            log.info("Звіт за {} успішно відправлено", date);
-
+            telegramService.sendAttendanceReport(chatId, report);
         } catch (Exception e) {
-            log.error("Помилка при формуванні звіту: {}", e.getMessage(), e);
-            telegramService.sendText("Помилка при читанні таблиці: " + e.getMessage());
+            log.error("Помилка звіту: {}", e.getMessage());
+            telegramService.sendText(chatId, "Помилка при читанні таблиці.");
         }
     }
 
@@ -140,17 +116,12 @@ public class TelegramBotListener {
                 .replaceFirst("(?i)/z", "")
                 .trim();
 
-        // Якщо дата не вказана — сьогодні
-        if (datePart.isEmpty()) {
-            return LocalDate.now();
-        }
+        if (datePart.isEmpty()) return LocalDate.now();
 
-        // dd.MM.yyyy
         try {
             return LocalDate.parse(datePart, DateTimeFormatter.ofPattern("dd.MM.yyyy"));
         } catch (DateTimeParseException ignored) {}
 
-        // dd.MM (поточний рік)
         try {
             String withYear = datePart + "." + LocalDate.now().getYear();
             return LocalDate.parse(withYear, DateTimeFormatter.ofPattern("dd.MM.yyyy"));
@@ -159,10 +130,8 @@ public class TelegramBotListener {
         return null;
     }
 
-    private void handleHelpCommand() {
-        String helpText =
-                "Тепер ви можете використовувати кнопки меню внизу екрану!\n\n" +
-                        "Також я розумію прямі повідомлення з датою (наприклад, просто напишіть 27.04 або 27.04.2026).";
-        telegramService.sendText(helpText);
+    private void handleHelpCommand(String chatId) {
+        String helpText = "Використовуйте кнопки або надішліть дату текстом (наприклад 25.04).";
+        telegramService.sendText(chatId, helpText);
     }
 }
