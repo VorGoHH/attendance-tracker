@@ -34,10 +34,7 @@ public class TelegramBotListener {
 
     private long lastUpdateId = 0;
 
-    /**
-     * Кожні 5 секунд перевіряє нові повідомлення боту.
-     * Якщо прийшла команда /звіт або /report — формує і відправляє звіт.
-     */
+
     @Scheduled(fixedDelay = 5000)
     public void pollUpdates() {
         try {

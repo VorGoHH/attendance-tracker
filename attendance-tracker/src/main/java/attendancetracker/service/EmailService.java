@@ -51,7 +51,7 @@ public class EmailService {
         sb.append(String.format("Хворі – %d%n", report.getSick()));
         sb.append(String.format("Звільнення – %d%n", report.getExcused()));
         sb.append(String.format("Відрядження – %d%n", report.getBusinessTrip()));
-        sb.append(String.format("Відсутні – %d%n", report.getAbsent()));
+        sb.append(String.format("Індивідуальні заняття – %d%n", report.getIndividual()));
         sb.append(String.format("Незаконно відсутні – %d%n", report.getIllegallyAbsent()));
         sb.append("\nСписок відсутніх:\n");
 
@@ -59,7 +59,7 @@ public class EmailService {
         appendList(sb, "Хворі", report.getSickList());
         appendList(sb, "Звільнення", report.getExcusedList());
         appendList(sb, "Відрядження", report.getBusinessTripList());
-        appendList(sb, "Відсутні", report.getAbsentList());
+            appendList(sb, "Індивідуальні заняття", report.getIndividualList());
         appendList(sb, "Незаконно відсутні", report.getIllegallyAbsentList());
 
         return sb.toString();

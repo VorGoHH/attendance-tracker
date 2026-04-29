@@ -70,7 +70,7 @@ public class GoogleSheetsService {
         List<String> onDutyList = new ArrayList<>();
         List<String> sickList = new ArrayList<>();
         List<String> excusedList = new ArrayList<>();
-        List<String> absentList = new ArrayList<>();
+        List<String> individualList = new ArrayList<>();
         List<String> illegallyAbsentList = new ArrayList<>();
         List<String> businessTripList = new ArrayList<>();
         int totalStudents = 0;
@@ -96,16 +96,20 @@ public class GoogleSheetsService {
                 case ON_DUTY -> onDutyList.add(studentName);
                 case SICK -> sickList.add(studentName);
                 case EXCUSED -> excusedList.add(studentName);
-                case ABSENT -> absentList.add(studentName);
+                case INDIVIDUAL -> individualList.add(studentName);
                 case ILLEGALLYABSENT -> illegallyAbsentList.add(studentName);
                 case BUSINESS_TRIP -> businessTripList.add(studentName);
                 case PRESENT -> {}
             }
         }
 
-        log.info("Оброблено {} студентів. Наряд: {}, Хворі: {}, Звільнені: {}, Відсутні: {}, Незаконно: {}, Відрядження: {}",
-                totalStudents, onDutyList.size(), sickList.size(), excusedList.size(),
-                absentList.size(), illegallyAbsentList.size(), businessTripList.size());
+        int totalPresent = totalStudents - onDutyList.size() - sickList.size()
+                - excusedList.size() - individualList.size()
+                - illegallyAbsentList.size() - businessTripList.size();
+
+        log.info("Оброблено {} студентів. Присутніх: {}, Наряд: {}, Хворі: {}, Звільнені: {}, І/з: {}, Незаконно: {}, Відрядження: {}",
+                totalStudents, totalPresent, onDutyList.size(), sickList.size(),
+                excusedList.size(), individualList.size(), illegallyAbsentList.size(), businessTripList.size());
 
         return AttendanceReport.builder()
                 .groupName(groupName)
@@ -114,13 +118,13 @@ public class GoogleSheetsService {
                 .onDuty(onDutyList.size())
                 .sick(sickList.size())
                 .excused(excusedList.size())
-                .absent(absentList.size())
+                .individual(individualList.size())
                 .illegallyAbsent(illegallyAbsentList.size())
                 .businessTrip(businessTripList.size())
                 .onDutyList(onDutyList)
                 .sickList(sickList)
                 .excusedList(excusedList)
-                .absentList(absentList)
+                .individualList(individualList)
                 .illegallyAbsentList(illegallyAbsentList)
                 .businessTripList(businessTripList)
                 .build();

@@ -74,7 +74,7 @@ class EmailServiceTest {
         assertThat(body).contains("Наряд – 1");
         assertThat(body).contains("Хворі – 1");
         assertThat(body).contains("Звільнення – 1");
-        assertThat(body).contains("Відсутні – 1");
+        assertThat(body).contains("Індивідуальні заняття – 1");
         assertThat(body).contains("Незаконно відсутні – 1");
     }
 
@@ -100,9 +100,9 @@ class EmailServiceTest {
                 .groupName("241 н.г.")
                 .reportDate("28.04.2026")
                 .totalStudents(1)
-                .onDuty(0).sick(0).excused(0).absent(0).illegallyAbsent(0).businessTrip(0)
+                .onDuty(0).sick(0).excused(0).individual(0).illegallyAbsent(0).businessTrip(0)
                 .onDutyList(List.of()).sickList(List.of()).excusedList(List.of())
-                .absentList(List.of()).illegallyAbsentList(List.of()).businessTripList(List.of())
+                .individualList(List.of()).illegallyAbsentList(List.of()).businessTripList(List.of())
                 .build();
 
         ArgumentCaptor<SimpleMailMessage> captor = ArgumentCaptor.forClass(SimpleMailMessage.class);
@@ -121,12 +121,12 @@ class EmailServiceTest {
                 .groupName("241 н.г.")
                 .reportDate("28.04.2026")
                 .totalStudents(5)
-                .onDuty(1).sick(1).excused(1).absent(1).illegallyAbsent(1).businessTrip(0)
+                .onDuty(1).sick(1).excused(1).individual(1).illegallyAbsent(1).businessTrip(0)
                 .onDutyList(List.of("Базелюк О.В."))
                 .sickList(List.of("Богаченко П.І."))
                 .excusedList(List.of("Бондаренко А.А."))
-                .absentList(List.of("Кравець О.М."))
-                .illegallyAbsentList(List.of("Гнатюк Т.С."))
+                .individualList(List.of("Вашуленко Д.А."))
+                .illegallyAbsentList(List.of("Вітвіцький О.В."))
                 .businessTripList(List.of())
                 .build();
     }

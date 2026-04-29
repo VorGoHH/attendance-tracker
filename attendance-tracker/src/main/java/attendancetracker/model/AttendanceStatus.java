@@ -3,12 +3,12 @@ package attendancetracker.model;
 public enum AttendanceStatus {
 
     PRESENT(""),
-    ON_DUTY("Н"),
-    SICK("Хв"),
-    EXCUSED("Зв"),
-    ABSENT("В"),
-    ILLEGALLYABSENT("Х"),
-    BUSINESS_TRIP("Відр");
+    ON_DUTY("Наряд"),
+    SICK("Хворий"),
+    EXCUSED("Звільнення"),
+    INDIVIDUAL("Індивідуальні заняття"),
+    ILLEGALLYABSENT("Незаконно відсутній"),
+    BUSINESS_TRIP("Відрядження");
 
     private final String marker;
 
@@ -24,14 +24,12 @@ public enum AttendanceStatus {
         if (value == null || value.isBlank()) {
             return PRESENT;
         }
-
         String trimmed = value.trim();
-
         return switch (trimmed) {
             case "Наряд" -> ON_DUTY;
             case "Хворий" -> SICK;
             case "Звільнення" -> EXCUSED;
-            case "Відсутній" -> ABSENT;
+            case "Індивідуальні заняття" -> INDIVIDUAL;
             case "Незаконно відсутній" -> ILLEGALLYABSENT;
             case "Відрядження" -> BUSINESS_TRIP;
             default -> PRESENT;

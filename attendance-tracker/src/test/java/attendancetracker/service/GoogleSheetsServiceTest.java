@@ -93,10 +93,10 @@ class GoogleSheetsServiceTest {
                 Arrays.asList("Базелюк О.В.", "Наряд"),
                 Arrays.asList("Богаченко П.І.", "Хворий"),
                 Arrays.asList("Бондаренко А.А.", "Звільнення"),
-                Arrays.asList("Кравець О.М.", "Відсутній"),
-                Arrays.asList("Гнатюк Т.С.", "Незаконно відсутній"),
+                Arrays.asList("Вашуленко Д.А.", "Індивідуальні заняття"),
+                Arrays.asList("Вітвіцький О.В.", "Незаконно відсутній"),
                 Arrays.asList("Кінах В.О.", "Відрядження"),
-                Arrays.asList("Присутній І.І.", "")
+                Arrays.asList("Каніболоцький М.Є.", "")
         );
         mockSheetResponse(rows);
 
@@ -107,15 +107,15 @@ class GoogleSheetsServiceTest {
         assertThat(report.getOnDuty()).isEqualTo(1);
         assertThat(report.getSick()).isEqualTo(1);
         assertThat(report.getExcused()).isEqualTo(1);
-        assertThat(report.getAbsent()).isEqualTo(1);
+        assertThat(report.getIndividual()).isEqualTo(1);
         assertThat(report.getIllegallyAbsent()).isEqualTo(1);
         assertThat(report.getBusinessTrip()).isEqualTo(1);
 
         assertThat(report.getOnDutyList()).containsExactly("Базелюк О.В.");
         assertThat(report.getSickList()).containsExactly("Богаченко П.І.");
         assertThat(report.getExcusedList()).containsExactly("Бондаренко А.А.");
-        assertThat(report.getAbsentList()).containsExactly("Кравець О.М.");
-        assertThat(report.getIllegallyAbsentList()).containsExactly("Гнатюк Т.С.");
+        assertThat(report.getIndividualList()).containsExactly("Вашуленко Д.А.");
+        assertThat(report.getIllegallyAbsentList()).containsExactly("Вітвіцький О.В.");
         assertThat(report.getBusinessTripList()).containsExactly("Кінах В.О.");
     }
 

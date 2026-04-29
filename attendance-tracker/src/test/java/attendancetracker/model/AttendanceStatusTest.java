@@ -45,9 +45,9 @@ class AttendanceStatusTest {
     }
 
     @Test
-    @DisplayName("Відсутній → ABSENT")
+    @DisplayName("Індивідуальні заняття → INDIVIDUAL")
     void absent_returnsAbsent() {
-        assertThat(AttendanceStatus.fromMarker("Відсутній")).isEqualTo(AttendanceStatus.ABSENT);
+        assertThat(AttendanceStatus.fromMarker("Індивідуальні заняття")).isEqualTo(AttendanceStatus.INDIVIDUAL);
     }
 
     @Test

@@ -4,9 +4,9 @@ import attendancetracker.model.AttendanceReport;
 import attendancetracker.service.EmailService;
 import attendancetracker.service.GoogleSheetsService;
 import attendancetracker.service.TelegramService;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 @Slf4j
@@ -18,7 +18,13 @@ public class AttendanceJob {
     private final EmailService emailService;
     private final TelegramService telegramService;
 
-    @Scheduled(cron = "0 0 18 * * MON-FRI")
+
+    @PostConstruct
+    public void runOnStartup() {
+        log.info("===== Запуск при старті =====");
+        generateAndSendAttendanceReport();
+    }
+
 
     public void generateAndSendAttendanceReport() {
         log.info("===== Запуск задачі відвідуваності =====");
@@ -30,15 +36,12 @@ public class AttendanceJob {
                 return;
             }
 
-            log.info("Дані зчитано. Студентів: {}, Відсутніх: {}",
-                    report.getTotalStudents(), report.getAbsent());
-
+            log.info("Дані зчитано. Студентів: {}", report.getTotalStudents());
 
             emailService.sendAttendanceReport(report);
-
             telegramService.sendAttendanceReport(report);
 
-            log.info("===== Задача виконана успішно =====");
+            log.info("===== Задача виконана успішно! =====");
         } catch (Exception e) {
             log.error("===== ПОМИЛКА: {} =====", e.getMessage(), e);
         }

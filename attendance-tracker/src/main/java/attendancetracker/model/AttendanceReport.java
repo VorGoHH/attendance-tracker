@@ -15,13 +15,13 @@ public class AttendanceReport {
     private int onDuty;
     private int sick;
     private int excused;
-    private int absent;
+    private int individual;
     private int illegallyAbsent;
     private int businessTrip;
     private List<String> onDutyList;
     private List<String> sickList;
     private List<String> excusedList;
-    private List<String> absentList;
+    private List<String> individualList;
     private List<String> illegallyAbsentList;
     private List<String> businessTripList;
 }
