@@ -51,7 +51,7 @@ class GoogleSheetsServiceTest {
     @DisplayName("Повертає null якщо таблиця порожня")
     void emptySheet_returnsNull() throws IOException {
         mockSheetResponse(List.of());
-        assertThat(googleSheetsService.getAttendanceForToday()).isNull();
+        assertThat(googleSheetsService.getAttendanceForDate(LocalDate.of(2026, 4, 27))).isNull();
     }
 
     @Test
@@ -61,23 +61,24 @@ class GoogleSheetsServiceTest {
                 List.of("ПІБ курсанта", "01.01", "02.01")
         );
         mockSheetResponse(rows);
-        assertThat(googleSheetsService.getAttendanceForToday()).isNull();
+        assertThat(googleSheetsService.getAttendanceForDate(LocalDate.of(2026, 1, 3))).isNull();
     }
 
     @Test
     @DisplayName("Правильно рахує кількість студентів")
     void correctStudentCount() throws IOException {
-        String today = LocalDate.now().format(DateTimeFormatter.ofPattern("dd.MM"));
+        LocalDate date = LocalDate.of(2026, 4, 27);
+        String dateStr = date.format(DateTimeFormatter.ofPattern("dd.MM"));
 
         List<List<Object>> rows = Arrays.asList(
-                Arrays.asList("ПІБ курсанта", today),
+                Arrays.asList("ПІБ курсанта", dateStr),
                 Arrays.asList("Базелюк О.В.", ""),
                 Arrays.asList("Богаченко П.І.", ""),
                 Arrays.asList("Бондаренко А.А.", "")
         );
         mockSheetResponse(rows);
 
-        AttendanceReport report = googleSheetsService.getAttendanceForToday();
+        AttendanceReport report = googleSheetsService.getAttendanceForDate(date);
 
         assertThat(report).isNotNull();
         assertThat(report.getTotalStudents()).isEqualTo(3);
@@ -86,21 +87,22 @@ class GoogleSheetsServiceTest {
     @Test
     @DisplayName("Правильно розподіляє студентів по статусах")
     void correctStatusDistribution() throws IOException {
-        String today = LocalDate.now().format(DateTimeFormatter.ofPattern("dd.MM"));
+        LocalDate date = LocalDate.of(2026, 4, 27);
+        String dateStr = date.format(DateTimeFormatter.ofPattern("dd.MM"));
 
         List<List<Object>> rows = Arrays.asList(
-                Arrays.asList("ПІБ курсанта", today),
+                Arrays.asList("ПІБ курсанта", dateStr),
                 Arrays.asList("Базелюк О.В.", "Наряд"),
                 Arrays.asList("Богаченко П.І.", "Хворий"),
                 Arrays.asList("Бондаренко А.А.", "Звільнення"),
                 Arrays.asList("Вашуленко Д.А.", "Індивідуальні заняття"),
                 Arrays.asList("Вітвіцький О.В.", "Незаконно відсутній"),
                 Arrays.asList("Кінах В.О.", "Відрядження"),
-                Arrays.asList("Каніболоцький М.Є.", "")
+                Arrays.asList("Каніболоцький М.Є.", "") // Присутній
         );
         mockSheetResponse(rows);
 
-        AttendanceReport report = googleSheetsService.getAttendanceForToday();
+        AttendanceReport report = googleSheetsService.getAttendanceForDate(date);
 
         assertThat(report).isNotNull();
         assertThat(report.getTotalStudents()).isEqualTo(7);
@@ -120,50 +122,65 @@ class GoogleSheetsServiceTest {
     }
 
     @Test
-    @DisplayName("Пропускає порожні рядки")
+    @DisplayName("Пропускає порожні рядки та рядки без імені")
     void skipsEmptyRows() throws IOException {
-        String today = LocalDate.now().format(DateTimeFormatter.ofPattern("dd.MM"));
+        LocalDate date = LocalDate.of(2026, 4, 27);
+        String dateStr = date.format(DateTimeFormatter.ofPattern("dd.MM"));
 
         List<List<Object>> rows = Arrays.asList(
-                Arrays.asList("ПІБ курсанта", today),
+                Arrays.asList("ПІБ курсанта", dateStr),
                 Arrays.asList("Базелюк О.В.", ""),
-                List.of(),
-                Arrays.asList("", ""),
+                List.of(), // Повністю порожній
+                Arrays.asList("", "Хворий"), // Без імені
                 Arrays.asList("Бондаренко А.А.", "")
         );
         mockSheetResponse(rows);
 
-        AttendanceReport report = googleSheetsService.getAttendanceForToday();
+        AttendanceReport report = googleSheetsService.getAttendanceForDate(date);
 
         assertThat(report).isNotNull();
         assertThat(report.getTotalStudents()).isEqualTo(2);
     }
 
     @Test
-    @DisplayName("Правильно встановлює назву групи та дату")
-    void correctGroupNameAndDate() throws IOException {
-        String today = LocalDate.now().format(DateTimeFormatter.ofPattern("dd.MM"));
-        String todayFull = LocalDate.now().format(DateTimeFormatter.ofPattern("dd.MM.yyyy"));
+    @DisplayName("Правильно визначає назву вкладки (місяць) та передає правильний range в API")
+    void correctSheetNameAndRangeRequested() throws IOException {
+        LocalDate date = LocalDate.of(2026, 4, 27); // Квітень
+        mockSheetResponse(List.of(
+                Arrays.asList("ПІБ курсанта", "27.04"),
+                Arrays.asList("Базелюк О.В.", "")
+        ));
+
+        googleSheetsService.getAttendanceForDate(date);
+
+        verify(values).get("test-id", "Квітень!A:Z");
+    }
+
+    @Test
+    @DisplayName("Правильно встановлює назву групи та повну дату у звіт")
+    void correctGroupNameAndFullDate() throws IOException {
+        LocalDate date = LocalDate.of(2026, 5, 15); // Травень
 
         List<List<Object>> rows = Arrays.asList(
-                Arrays.asList("ПІБ курсанта", today),
+                Arrays.asList("ПІБ курсанта", "15.05"),
                 Arrays.asList("Базелюк О.В.", "")
         );
         mockSheetResponse(rows);
 
-        AttendanceReport report = googleSheetsService.getAttendanceForToday();
+        AttendanceReport report = googleSheetsService.getAttendanceForDate(date);
 
         assertThat(report.getGroupName()).isEqualTo("241 н.г.");
-        assertThat(report.getReportDate()).isEqualTo(todayFull);
+        assertThat(report.getReportDate()).isEqualTo("15.05.2026");
+        verify(values).get("test-id", "Травень!A:Z");
     }
 
     private void mockSheetResponse(List<List<Object>> rows) throws IOException {
         ValueRange valueRange = new ValueRange();
         valueRange.setValues(rows.isEmpty() ? null : rows);
 
-        when(sheetsService.spreadsheets()).thenReturn(spreadsheets);
-        when(spreadsheets.values()).thenReturn(values);
-        when(values.get(anyString(), anyString())).thenReturn(get);
-        when(get.execute()).thenReturn(valueRange);
+        lenient().when(sheetsService.spreadsheets()).thenReturn(spreadsheets);
+        lenient().when(spreadsheets.values()).thenReturn(values);
+        lenient().when(values.get(anyString(), anyString())).thenReturn(get);
+        lenient().when(get.execute()).thenReturn(valueRange);
     }
 }

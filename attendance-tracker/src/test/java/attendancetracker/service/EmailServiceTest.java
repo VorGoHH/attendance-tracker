@@ -111,10 +111,8 @@ class EmailServiceTest {
         verify(mailSender).send(captor.capture());
         String body = captor.getValue().getText();
 
-
         assertThat(body).doesNotContain("Наряд –\n");
     }
-
 
     private AttendanceReport buildReport() {
         return AttendanceReport.builder()
